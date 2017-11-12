@@ -64,8 +64,9 @@ def get_model_details():
     return jsonify(names)
 
 @app.route('/notify')
-def notify(model_id):
-    evaluate_gradients(model_id)
+def notify():
+    if model_id is not None:
+        evaluate_gradients(model_id)
 
 @app.route('/add_model',methods='POST')
 def add_model():
@@ -92,8 +93,12 @@ def add_model():
     data[model_id]['target'] = target_data
 
 @app.route('/dashboard')
-def get_model_data(model_id):
-    return jsonify(dict(num_grads=num_gradients[model_id], errors=errors[model_id]))
+def get_model_data():
+    data = {'model_names':names}
+    model_id = request.args.get('model_id')
+    if model_id is not None:
+        data.update(dict(num_grads=num_gradients[model_id], errors=errors[model_id]))
+    return jsonify(data)
 
 app.debug = True
 app.run(port=5555, host='0.0.0.0')
