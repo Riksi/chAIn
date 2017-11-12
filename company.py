@@ -1,5 +1,6 @@
 from flask import Flask, request, session, url_for, redirect, \
      render_template, abort, g, flash, _app_ctx_stack, jsonify
+import pandas as pd
 import time
 import warnings
 import numpy as np
@@ -13,6 +14,8 @@ from threading import Thread
 app = Flask(__name__)
 
 warnings.filterwarnings('ignore')
+
+UPLOAD_FOLDER = 'uploads'
 
 ADDRESS = '0x345ca3e014aaf5dca488057592ee47305d9b3e10'
 PORT = 9545
@@ -76,9 +79,28 @@ def add_model():
     target_error = request.form.get('target_error')
     clf_name = request.form.get('clf_name')
     model_name = request.form.get('model_name')
-    input_data = request.form.get('input_data')
-    target_data = request.form.get('target_data')
-    clf = CLASSIFIERS[clf_name](desc=model_name,n_inputs=input_data.shape[1],n_labels=target_data.shape[1])
+
+    input_data = request.files['input_data']
+    target_data = request.files['target_data']
+
+    input_path = os.path.join(app.config['UPLOAD_FOLDER'], 'input_data')
+    target_path = os.path.join(app.config['UPLOAD_FOLDER'], 'target_data')
+
+    input_data.save(input_path)
+    target_data.save(target_path)
+
+    input_data = pd.read_csv(input_path)
+    target_data = pd.read_csv(target_path)
+
+    # input_data = request.form.get('input_data').split('\n')
+    # target_data = request.form.get('target_data').split('\n')
+
+    # input_data = np.array([list(map(float, i.split(','))) for i in input_data])
+    # target_data = np.array([list(map(float, i.split(','))) for i in target_data])
+
+    clf = CLASSIFIERS[clf_name](desc=model_name,
+                                n_inputs=input_data.shape[1],
+                                n_labels=target_data.shape[1])
     initial_error = clf.evaluate(input_data, target_data)
     clf.encrypt(pubkey)
     model = Model(owner=address,
