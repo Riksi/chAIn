@@ -1,5 +1,8 @@
 import json
 import copy
+
+import os #ANUSH
+
 from web3 import Web3, KeepAliveRPCProvider
 
 from sonar.ipfs import IPFS
@@ -96,7 +99,7 @@ class ModelRepository():
 
     def __init__(self, contract_address, account=None,
                  ipfs=IPFS('127.0.0.1', 5001),
-                 web3_host='localhost', web3_port=8545):
+                 web3_host='localhost', web3_port=9545):
         """Creates the base blockchain client object (web3) then
          connects to the Sonar contract.
         It assumes you're working with a local testrpc blockchain."""
@@ -115,8 +118,8 @@ class ModelRepository():
 
     def connect_to_contract(self, contract_address):
         """Connects to the Sonar contract using its address and ABI"""
-
-        f = open('../abis/ModelRepository.abi', 'r')
+        filepath = os.path.abspath('../abis/ModelRepository.abi')#[ANUSH] 
+        f = open(filepath, 'r')
         abi = json.loads(f.read())
         f.close()
 
