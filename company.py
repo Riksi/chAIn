@@ -18,7 +18,8 @@ ADDRESS = '0x345ca3e014aaf5dca488057592ee47305d9b3e10'
 PORT = 9545
 HOST = 'localhost'
 
-REPO = ModelRepository(contract_address = ADDRESS, web3_port = PORT, web3_host = HOST)
+REPO = ModelRepository(contract_address = ADDRESS, 
+web3_port = PORT, web3_host = HOST)
 
 CLASSIFIERS = {'Linear_Classifier': LinearClassifier}
 names = {}
@@ -68,7 +69,7 @@ def notify():
     if model_id is not None:
         evaluate_gradients(model_id)
 
-@app.route('/add_model',methods='POST')
+@app.route('/add_model',methods=['POST'])
 def add_model():
     bounty = request.form.get('bounty')
     target_error = request.form.get('target_error')
