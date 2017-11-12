@@ -20,8 +20,9 @@ class Gradient():
 
 
 class Model():
-    def __init__(self, owner, syft_obj, bounty, initial_error, target_error,
+    def __init__(self, name, owner, syft_obj, bounty, initial_error, target_error,
                  model_id=None, repo=None):
+        self.name = name
         self.owner = owner
         self.syft_obj = syft_obj
         self.bounty = bounty
@@ -118,7 +119,7 @@ class ModelRepository():
 
     def connect_to_contract(self, contract_address):
         """Connects to the Sonar contract using its address and ABI"""
-        filepath = os.path.abspath('abis/ModelRepository.abi')#[ANUSH] 
+        filepath = os.path.abspath('../abis/ModelRepository.abi')#[ANUSH] 
         f = open(filepath, 'r')
         abi = json.loads(f.read())
         f.close()
@@ -158,7 +159,8 @@ class ModelRepository():
         deploy_tx = self.get_transaction(
             model.owner,
             value=self.web3.toWei(model.bounty, 'ether'))
-        deploy_tx.addModel(IPFSAddress().to_ethereum(ipfs_address),
+        deploy_tx.addModel(model.name,
+                            IPFSAddress().to_ethereum(ipfs_address),
                            model.initial_error, model.target_error)
         return self.call.getNumModels() - 1
 
@@ -179,11 +181,11 @@ class ModelRepository():
     def __getitem__(self, model_id):
         if(model_id < len(self)):
 
-            (owner, bounty, initial_error, target_error, mca) = \
+            (name, owner, bounty, initial_error, target_error, mca) = \
                 self.call.getModel(model_id)
             syft_obj = \
                 self.ipfs.retrieve(IPFSAddress().from_ethereum(mca))
-            model = Model(owner, syft_obj, self.web3.fromWei(bounty, 'ether'),
+            model = Model(name, owner, syft_obj, self.web3.fromWei(bounty, 'ether'),
                           initial_error, target_error, model_id, self)
 
             return model
