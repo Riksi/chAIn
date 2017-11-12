@@ -129,13 +129,21 @@ def add_model():
 
     return jsonify({'model_name':model_name})
 
-@app.route('/dashboard')
+@app.route('/models')
 def get_model_data():
-    data = {'model_names':names}
-    model_id = request.args.get('model_id')
-    if model_id is not None:
-        data.update(dict(num_grads=num_gradients[model_id], errors=errors[model_id]))
-    return jsonify(data)
+    num_models = REPO.call.getNumModels()
+    names = {}
+    errors = {}
+    num_gradients = {}
+    for model_id in range(num_models):
+        model_id_name,_,_,_,_,_ = REPO.call.getModel(model_id)
+        names[model_id] = model_id_name.replace('\u0000', "")
+        print('names', names)
+        with open ('model_{}.pkl'.format(model_id), 'rb') as f:
+            model_name, num_grads, errs = pickle.load(f)
+        errors[model_id] = errs
+        num_gradients[model_id] = num_grads
+    return jsonify(dict(names=names, num_gradients=num_gradients, errors=errors))
 
 app.debug = True
 app.run(port=5556, host='0.0.0.0')

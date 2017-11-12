@@ -119,7 +119,7 @@ class ModelRepository():
 
     def connect_to_contract(self, contract_address):
         """Connects to the Sonar contract using its address and ABI"""
-        filepath = os.path.abspath('../abis/ModelRepository.abi')#[ANUSH] 
+        filepath = os.path.abspath('abis/ModelRepository.abi')#[ANUSH] 
         f = open(filepath, 'r')
         abi = json.loads(f.read())
         f.close()
