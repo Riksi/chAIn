@@ -66,6 +66,7 @@ def get_model_details():
 
 @app.route('/notify')
 def notify():
+    model_id = request.args.get('model_id')
     if model_id is not None:
         evaluate_gradients(model_id)
 
