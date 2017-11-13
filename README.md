@@ -19,6 +19,8 @@ The process is illustrated in the architecture diagram below.
 
 ![](https://github.com/Riksi/chAIn/blob/master/architecture.jpg)
 
+You can watch a video [here](https://www.youtube.com/watch?v=pDOv89Rc-78).
+
 ## Why blockchain?
 Here we summarise some the ideas put forward in the OpenMinded project that interested us the most (we summarise them as we understand them - if we have misstated any of these, we apologise sincerely).
 
