@@ -7,11 +7,11 @@ Our aim was to combine these two cutting edge technologies to decentralise finan
 The chAIn project is built upon the framework proposed by OpenMined. There are two important components, each of which can have their own set of smart contracts:
 
 1. Model training
-- People who wish to lend (the codebase has the idea of 'the company' for the sake of simplicity but they also be a group of individuals) create a smart contract via which they assign a sum of money ('the bounty') that will be distributed to people who share their data. They also decide on an machine learning model, a target error rate that the model should be trained to meet, and a mechanism for dividing bounty among those who share their data. 
+- People who wish to lend (the codebase has the idea of 'the company' for the sake of simplicity but they also be a group of individuals) create a smart contract via which they assign a sum of money ('the bounty') that will be distributed to people who share their data. They also decide on an machine learning model, a target accuracy that the model should be trained to meet, and a mechanism for dividing bounty among those who share their data. 
 - Individuals (we refer to them as 'data owners') can share their personal financial details in return for a reward. They are incentivised to share the data, knowing that not only will they be rewarded but that privacy will be maintained. 
 
 2. Model deployment
-- Once the model has been trained i.e. when its error rate drops below the target error rate, it can then be deployed via another smart contract. Predictions like risk of default can be made on potential borrower's data to make a decision as to whether or not to lend and the rate of interest to charge.
+- Once the model has been trained i.e. when its accuracy reaches or exceeds the target, it can then be deployed via another smart contract. Predictions like risk of default can be made on potential borrower's data to make a decision as to whether or not to lend and the rate of interest to charge.
 
 Due to time constraints we focussed on just the first part of this system i.e. model training.
 
