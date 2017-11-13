@@ -1,154 +1,52 @@
-# PySonar
+## What is chAIn?
+The goal of the chAIn project is to develop an AI+Blockchain-powered decentralised bank. As a starting point we want to focus on developing a truly peer-to-peer lending platform, to develop *links* between different entities *chaining* their interests together. The problem with relying purely on smart contracts is that it is necessary to evaluate the risks and rewards involved. Smart contracts on their own can take the place of trusted intermediaries but often these intermediaries, such as financial organisations and law firms also provide expert knowledge that cannot necessarily be replicated by an ordinary smart contract. Increasingly however machine learning algorithms are able to perform many expert tasks. Fintech companies such as challenger banks often rely on vast quantities of data to provide alternative kinds of products and services, for example lending money to a more diverse group of clients. However it is important that the people whose data is used to build algorithms are also compensated in some way. 
 
-> Decentralized Machine Learning Client
+Our aim was to combine these two cutting edge technologies to decentralise financial services so that value can be intelligently directed to where it is needed with minmal intervention from third parties. We were inspired the [OpenMined](https://openmined.org) project and leverage its [open source codebase](https://github.com/OpenMined).  The key to the OpenMined project is a method called homomorphic encryption which allows machine learning algorithms to be trained locally on a user's device without revealing the details of the algorithm so that it cannot be modified by malicious actors, whilst preserving the privacy of the user's data. 
 
-[![Chat on Slack](https://img.shields.io/badge/chat-on%20slack-7A5979.svg)](https://openmined.slack.com/messages/team_pysonar)
-[![Build Status](https://travis-ci.org/OpenMined/PySonar.svg?branch=master)](https://travis-ci.org/OpenMined/PySonar)
+## How does it work?
+The chAIn project is built upon the framework proposed by OpenMined. There are two important components, each of which can have their own set of smart contracts:
 
-<!-- TOC depthFrom:2 -->
+1. Model training
+- People who wish to lend (the codebase has the idea of 'the company' for the sake of simplicity but they also be a group of individuals) create a smart contract via which they assign a sum of money ('the bounty') that will be distributed to people who share their data. They also decide on an machine learning model, a target error rate that the model should be trained to meet, and a mechanism for dividing bounty among those who share their data. 
+- Individuals (we refer to them as 'data owners') can share their personal financial details in return for a reward. They are incentivised to share the data, knowing that not only will they be rewarded but that privacy will be maintained. 
 
-- [Setup](#setup)
-    - [Using Docker](#using-docker)
-- [Usage](#usage)
-    - [Bootstrap environment](#bootstrap-environment)
-    - [Start](#start)
-    - [Know issues](#know-issues)
-- [License](#license)
+2. Model deployment
+- Once the model has been trained i.e. when its error rate drops below the target error rate, it can then be deployed via another smart contract. Predictions like risk of default can be made on potential borrower's data to make a decision as to whether or not to lend and the rate of interest to charge.
 
-<!-- /TOC -->
+Due to time constraints we focussed on just the first part of this system i.e. model training.
 
-Sonar is a smart contract library that allows data scientists to publish new _models_ they want to get trained into the _ModelRepository_ and people to pick models they can train on their personal data.
+The process is illustrated in the architecture diagram below.
 
-You can find a working proof of concept in the [notebooks](./notebooks) directory.
+![](https://github.com/Riksi/chAIn/blob/master/architecture.jpg)
 
-## Setup
+## Why blockchain?
+Here we summarise some the ideas put forward in the OpenMinded project that interested us the most (we summarise them as we understand them - if we have misstated any of these, we apologise sincerely).
 
-### Using Docker
+1. We can store the official state of hte model across distributed clients.
+2. There is potential for the system of incentives to develop into a cryptocurrency system with its own token
+3. It is simpler to create and manage incentives via smart contracts and theoretically impossible to game the system
+4. The process is inherently distributed, which makes it conducive to a decentralised architecture
 
-Using [Docker](https://www.docker.com) is the easiest way to get this running.
+## The tech
+Our system consists of a smart contract and pair of applications, one for the use of the lender and one for the use of data-owner. 
 
-1. Run `docker-compose up`. This will launch IPFS, the in-memory fake ethereum blockchain with the smart contract, [OpenMined mine.js](https://github.com/OpenMined/mine.js) and the jupyter notebooks
-2. Open the the Jupyter notebooks on [http://localhost:8888](http://localhost:8888)
-3. Step through the notebook and check the output of the previous `docker-compose up` to get some infos on what happens
+The contract is found in ModelRepository.sol and was based on OpenMined's demo with some of our own modifications. For simplicity we implemented the applications as Flask apps to be run locally and accessed via a browser. The main functionality is found in the files company.py and data-owner.py. We relied on the simple demo presented OpenMined's IPython notebook 'Sonar - Decentralized Learning Demo.ipynb' but built it out into two different applications for the system. Through these apps the lenders can manage the contract and models whilst the data-owner can share their data. 
 
-## Usage
+In order to communicate with the contract, the module web3.py is used by these applications. We also rely on OpenMined's repositories [Sonar](https://github.com/OpenMined/Sonar), [PySonar](https://github.com/OpenMined/PySonar), and, crucially, for encrypted machine learning, its repository, [PySyft](https://github.com/OpenMined/PySyft). Due to the lack of functionality for mathematical operations in the present state of the library we used a linear classifier in this first stage of the project. For out system to work, setup instructions provided by each of these repositories need to be followed in order to create a contract and install all the necessary modules.
 
-### Bootstrap environment
+A Python based application was needed for the lender and the data-owner because we have to do machine learning off-chain, whilst on the chain, rewards are calculated and incentives are transferred appropriately. Also the contract stores the addresses of the model data which is stored on the decentralised InterPlanetary File System since the data is too large to be stored on chain. 
 
-Before running the demo there are a couple of prerequisites you need to install.
+For model training, to simulate data-owners sending data, we used the data provided by [Lending Club](https://www.lendingclub.com/info/download-data.action).
 
-#### Base libraries
+## Where next
+Of course there is much more we can do even to develop the peer-to-peer lending system. Here are some important areas where we want to focus:
 
-Before installing the python packages you need to make sure your system holds a set of basic math libraries required for the encryption operations (`phe` lib)
+1. Build and train more sophisticated classifiers and simulate the involvement of many data-owners sending their data
+2. Create a more complex smart contracts - for example dealing with attempts to resend same data whilst allowing different data to be sent at different times by same data-owner (where this is appropriate e.g. bank statements)
+3. Package the applications so that users can easily download and run them
+4. Deploy the model 
+5. Develop a token for this system
+6. Extend this framework to other financial services e.g. insurance.
 
-* [mpc](http://www.multiprecision.org/index.php?prog=mpc): arithmetic of complex numbers with arbitrarily high precision and correct rounding of the result
-* [mpfr](http://www.mpfr.org/): multiple-precision floating-point computations
-* [gmp](https://gmplib.org/): GNU multiple precision arithmetic library
-* [npm](https://www.npmjs.com/): NPM Package Manager
 
-For MacOS with brew just run:
 
-```sh
-brew install libmpc mpfr gmp
-```
-
-For Linux run:
-
-```sh
-apt-get install libgmp3-dev libmpfr-dev libmpc-dev python3-dev
-```
-
-Then run:
-
-```
-curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.5/install.sh | bash
-nvm install v8
-```
-
-#### Solidity
-
-The solidity tools are required to compile the contract of our demo.
-See [installing solidity](http://solidity.readthedocs.io/en/develop/installing-solidity.html) for instructions for your platform.
-
-#### Truffle
-
-In order to import ABIs you'll need to install [truffle](https://www.npmjs.com/package/truffle).
-```
-sudo npm install -g truffle
-```
-
-#### IPFS
-
-As the network itself is too big to actually host it on the blockchain you need `IPFS` to host the files.
-For installation see the [ipfs installation page](https://dist.ipfs.io/#go-ipfs) or run:
-
-```sh
-brew install ipfs
-```
-
-After installation is complete run `ipfs init` to initialize your local IPFS system.
-
-#### PIP packages
-
-Make sure you have a clean python3 install and continue with installing all the packages
-
-```sh
-pip install -r requirements.txt
-```
-
-#### PIP package maintenance
-
-PySonar utilizes pip-tools to help with maintaining PIP packages
-(https://github.com/jazzband/pip-tools)
-
-To update all packages, periodically re-run
-```
-pip-compile --upgrade
-```
-
-#### Build local libraries
-
-First you need to get `sonar` package bundled up
-
-```sh
-python setup.py install
-```
-
-Then make sure you also have the [`syft`](https://github.com/OpenMined/syft) package properly installed. Head over to the repository and follow its instructions.
-
-#### Import Smart Contract ABI
-
-The interface for our `Sonar` smart contract is distributed via an npm package. You can import the `ModelRepository.abi` file to your local environment by running
-
-```sh
-make import-abi
-```
-
-which will place the file at `abis/ModelRepository.abi`.
-
-### Start
-
-After you made sure all the installation steps are done you need to set up your local mock environment.
-
-```sh
-# start the ipfs daemon in the background
-ipfs daemon&
-# run local ethereum mock
-testrpc -a 1000
-```
-
-Now open a second shell, start the notebook and follow its instructions
-
-```sh
-jupyter notebook notebooks
-```
-
-### Known issues
-
-* there have been reports of the `brew` installation of solidity not working properly
-
-If you experience any problems while running this demo please create a [github issue](https://github.com/OpenMined/sonar/issues) and help us get better.
-
-## License
-
-[Apache-2.0](https://github.com/OpenMined/PySonar/blob/master/LICENSE) by OpenMined contributors
