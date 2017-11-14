@@ -17,7 +17,7 @@ Due to time constraints we focussed on just the first part of this system i.e. m
 
 The process is illustrated in the architecture diagram below.
 
-![](https://github.com/Riksi/chAIn/blob/master/architecture.jpg)
+![](https://github.com/Riksi/chAIn/blob/master/architecture.jpeg)
 
 You can watch a video [here](https://www.youtube.com/watch?v=pDOv89Rc-78).
 
