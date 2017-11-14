@@ -1,0 +1,205 @@
+import json
+import copy
+
+import os #ANUSH
+
+from web3 import Web3, KeepAliveRPCProvider
+
+from sonar.ipfs import IPFS
+
+
+class Gradient():
+    def __init__(self, owner, grad_values, gradient_id, new_model_error=None,
+                 new_weights=None):
+        self.owner = owner
+        self.grad_values = grad_values
+        self.id = gradient_id
+
+        self.new_model_error = new_model_error
+        self.new_weights = new_weights
+
+
+class Model():
+    def __init__(self, name, owner, syft_obj, bounty, initial_error, target_error,
+                 model_id=None, repo=None):
+        self.name = name
+        self.owner = owner
+        self.syft_obj = syft_obj
+        self.bounty = bounty
+        self.initial_error = initial_error
+        self.best_error = None  # TODO: get this
+        self.target_error = target_error
+        self.model_id = model_id
+        self.repo = repo
+
+    def __getitem__(self, gradient_id):
+        (gradient_id, grad_owner, mca, new_model_error,
+         nwa) = self.repo.call.getGradient(self.model_id, gradient_id)
+        grad_values = \
+            self.repo.ipfs.retrieve(IPFSAddress().from_ethereum(mca))
+        if(new_model_error != 0):
+            new_weights = \
+                self.repo.ipfs.retrieve(IPFSAddress().from_ethereum(nwa))
+        else:
+            new_weights = None
+            new_model_error = None
+        g = Gradient(grad_owner, grad_values, gradient_id,
+                     new_model_error, new_weights)
+        return g
+
+    def __len__(self):
+        return self.repo.call.getNumGradientsforModel(self.model_id)
+
+    def submit_gradient(self, owner, input, target):
+        gradient = self.generate_gradient(owner, input, target)
+        self.repo.submit_gradient(gradient.owner,
+                                  self.model_id, gradient.grad_values)
+
+    def generate_gradient(self, owner, input, target):
+        grad_values = self.syft_obj.generate_gradient(input, target)
+        gradient = Gradient(owner, grad_values, None)
+        return gradient
+
+    def evaluate_gradient(self, addr, gradient, prikey, pubkey, inputs,
+                          targets, alpha=1):
+
+        candidate = copy.deepcopy(self.syft_obj)
+        candidate.weights -= gradient.grad_values * alpha
+        candidate.weights = candidate.weights.decrypt(prikey)
+        candidate.encrypted = False
+
+        new_model_error = candidate.evaluate(inputs, targets)
+
+        tx = self.repo.get_transaction(from_addr=addr)
+        ipfs_address = self.repo.ipfs.store(candidate.encrypt(pubkey))
+        tx.evalGradient(gradient.id, new_model_error,
+                        IPFSAddress().to_ethereum(ipfs_address))
+
+        return new_model_error
+
+    def __str__(self):
+        s = ""
+        s += "Desc:" + str(self.syft_obj.desc) + "\n"
+        s += "Owner:" + str(self.owner) + "\n"
+        s += "Bounty:" + str(self.bounty) + "\n"
+        s += "Initial Error:" + str(self.initial_error) + "\n"
+        s += "Best Error:" + str(self.best_error) + "\n"
+        s += "Target Error:" + str(self.target_error) + "\n"
+        s += "Model ID:" + str(self.model_id) + "\n"
+        s += "Num Grads:" + str(len(self)) + "\n"
+        return s
+
+    def __repr__(self):
+        return self.__str__()
+
+
+class ModelRepository():
+    """This class is a python client wrapper around the Sonar contract,
+    giving easy to use python functions around the contract's functionality. It
+    currently assumes you're running on a local testrpc Ethereum blockchain."""
+
+    def __init__(self, contract_address, account=None,
+                 ipfs=IPFS('127.0.0.1', 5001),
+                 web3_host='localhost', web3_port=9545):
+        """Creates the base blockchain client object (web3) then
+         connects to the Sonar contract.
+        It assumes you're working with a local testrpc blockchain."""
+
+        self.ipfs = ipfs
+        self.web3 = Web3(KeepAliveRPCProvider(host=web3_host,
+                                              port=str(web3_port)))
+
+        if account is not None:
+            self.account = account
+        else:
+            print("No account submitted... using default[2]")
+            self.account = self.web3.eth.accounts[2]
+
+        self.connect_to_contract(contract_address)
+
+    def connect_to_contract(self, contract_address):
+        """Connects to the Sonar contract using its address and ABI"""
+        filepath = os.path.abspath('abis/ModelRepository.abi')#[ANUSH]
+        f = open(filepath, 'r')
+        abi = json.loads(f.read())
+        f.close()
+
+        self.contract = self.web3.eth.contract(abi=abi)
+
+        self.contract_address = contract_address
+
+        self.call = self.contract.call({
+            "from": self.account,
+            "to": self.contract_address,
+        })
+        print("Connected to OpenMined ModelRepository:" +
+              str(self.contract_address))
+
+    def get_transaction(self, from_addr, value=None):
+        """I consistently forget the conventions for executing transactions against
+        compiled contracts. This function helps that to be easier for me."""
+
+        txn = {}
+        txn["from"] = from_addr
+        txn["to"] = self.contract_address
+
+        if value is not None:
+            txn["value"] = int(value)
+
+        transact_raw = self.contract.transact(txn)
+        return transact_raw
+
+    def submit_model(self, model):
+        """This accepts a model from syft.nn, loads it into IPFS, and uploads
+        the IPFS address to the blockchain.
+
+        TODO: better way to storing IPFS addresses on the blockchain.
+        See https://github.com/OpenMined/Sonar/issues/19"""
+        ipfs_address = self.ipfs.store(model.syft_obj)
+        deploy_tx = self.get_transaction(
+            model.owner,
+            value=self.web3.toWei(model.bounty, 'ether'))
+            
+        deploy_tx.addModel(model.name,
+                            IPFSAddress().to_ethereum(ipfs_address),
+                           model.initial_error, model.target_error)
+        return self.call.getNumModels() - 1
+
+    def submit_gradient(self, from_addr, model_id, grad):
+        """This accepts gradients for a model from syft.nn and uploads them to
+        the blockchain (via IPFS), linked to a model by it's id.
+
+        TODO: modify syft.nn to actually have a "getGradients()" method call so
+        that there can be checks that keep people from uploading junk.
+        Currently any python object could be uploaded (which is obviously
+        dangerous)."""
+
+        ipfs_address = self.ipfs.store(grad)
+        self.get_transaction(from_addr).addGradient(
+            model_id, IPFSAddress().to_ethereum(ipfs_address))
+        return self.call.getNumGradientsforModel(model_id) - 1
+
+    def __getitem__(self, model_id):
+        if(model_id < len(self)):
+
+            (name, owner, bounty, initial_error, target_error, mca) = \
+                self.call.getModel(model_id)
+            syft_obj = \
+                self.ipfs.retrieve(IPFSAddress().from_ethereum(mca))
+            model = Model(name, owner, syft_obj, self.web3.fromWei(bounty, 'ether'),
+                          initial_error, target_error, model_id, self)
+
+            return model
+
+    def __len__(self):
+        return self.call.getNumModels()
+
+
+class IPFSAddress:
+    def from_ethereum(self, two_bytes32_rep):
+        return two_bytes32_rep[0] + two_bytes32_rep[1][0:14]
+#         return bytearray.fromhex("".join(two_bytes32_representation)
+#                        .replace("0x", "")).decode().replace("0", "")
+
+    def to_ethereum(self, ipfs_hash):
+        return [ipfs_hash[0:32], ipfs_hash[32:]]

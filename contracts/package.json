@@ -1,0 +1,45 @@
+{
+  "name": "@openmined/sonar",
+  "version": "0.0.1",
+  "description": "Federated Deep Learning on the Ethereum Blockchain",
+  "private": true,
+  "scripts": {
+    "lint": "standard && solium --file contracts/ModelRepository.sol",
+    "test:truffle": "truffle test",
+    "test": "npm run lint && npm run test:truffle",
+    "deploy": "truffle migrate",
+    "extract-abi": "./bin/extract-abi build/contracts/ModelRepository.json > build/ModelRepository.abi",
+    "postinstall": "truffle compile && npm run extract-abi"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OpenMined/Sonar.git"
+  },
+  "engine": {
+    "node": "^8.0.0",
+    "npm": ">5.0.0"
+  },
+  "author": "OpenMined",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/OpenMined/Sonar/issues"
+  },
+  "homepage": "https://github.com/OpenMined/Sonar#readme",
+  "dependencies": {
+    "truffle": "^3.4.9"
+  },
+  "devDependencies": {
+    "ethereumjs-testrpc": "^4.0.0",
+    "solium": "^1.0.0",
+    "standard": "^10.0.3"
+  },
+  "standard": {
+    "globals": [
+      "it",
+      "assert",
+      "artifacts",
+      "contract",
+      "web3"
+    ]
+  }
+}
