@@ -1,0 +1,19 @@
+{
+  "name": "chain",
+  "version": "1.0.0",
+  "description": "The goal of the chAIn project is to develop an AI+Blockchain-powered decentralised bank. As a starting point we want to focus on developing a truly peer-to-peer lending platform, to develop *links* between different entities *chaining* their interests together. The problem with relying purely on smart contracts is that it is necessary to evaluate the risks and rewards involved. Smart contracts on their own can take the place of trusted intermediaries but often these intermediaries, such as financial organisations and law firms also provide expert knowledge that cannot necessarily be replicated by an ordinary smart contract. Increasingly however machine learning algorithms are able to perform many expert tasks. Fintech companies such as challenger banks often rely on vast quantities of data to provide alternative kinds of products and services, for example lending money to a more diverse group of clients. However it is important that the people whose data is used to build algorithms are also compensated in some way.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Riksi/chAIn.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Riksi/chAIn/issues"
+  },
+  "homepage": "https://github.com/Riksi/chAIn#readme"
+}
