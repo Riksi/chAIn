@@ -1,5 +1,0 @@
-{
-    "dependencies": {
-        "@openmined/sonar": "../Sonar"
-    }
-}
